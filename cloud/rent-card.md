@@ -1,33 +1,41 @@
-# Rent Card — Mama J Kiosk
+# Rent Card — Local Retail Kiosk
 
-## Client & Site Need
-- **Client:** Mama J Kiosk
-- **What the site does:** Static product catalog, price list, and WhatsApp order contact for local customers.
+## The need
+A small static brochure and product price-list website with WhatsApp contact for a local retail kiosk in Kakuma (business described, not named).
+Estimated fifty visitors a day (assumed 50 visitors a day based on daily walk-in and WhatsApp price enquiries, and said so).
+Maximum monthly budget: 1,500 KES (shillings) a month.
 
-## Hosting Options (No-Server Row First)
-| Option | Size / Spec | Cost (USD) | Cost (KES @ ~130) | Rate Card, Page & Date Read |
-| :--- | :--- | :--- | :--- | :--- |
-| **1. No-server (Static Hosting — GitHub Pages / Cloudflare Pages)** | Static HTML/CSS/JS, 1 GB storage, 100 GB bandwidth | $0.00 / mo ($0.00 / hr) | KES 0 / mo (KES 0 / hr) | GitHub Pages / Cloudflare Pages Pricing (`pages.cloudflare.com`), read 13 Nov 2026 |
-| **2. Shared Hosting ("A Stall" — Truehost / Kenya Web Experts Starter)** | Shared CPU/RAM, 10–30 GB SSD, ~100,000 inodes | ~$2.30 / mo (~$0.0032 / hr) | KES 300 / mo (KES 0.41 / hr) | Truehost Kenya Shared Hosting (`truehost.co.ke/cloud-web-hosting/`), read 13 Nov 2026 |
-| **3. Small Cloud VM — Lab Size 1 (AWS EC2 `t3.micro`, Sydney `ap-southeast-2`)** | 2 vCPU (burstable), 1 GB RAM, 8 GB EBS | $9.64 / mo ($0.0132 / hr) | KES 1,253 / mo (KES 1.72 / hr) | AWS EC2 On-Demand Pricing (`aws.amazon.com/ec2/pricing/on-demand/`), read 13 Nov 2026 |
-| **4. Small VPS — Linode / Akamai Nanode 1 GB** | 1 vCPU, 1 GB RAM, 25 GB SSD | $5.00 / mo ($0.0075 / hr) | KES 650 / mo (KES 0.98 / hr) | Linode Pricing (`linode.com/pricing/`), read 13 Nov 2026 |
-| **5. Larger Cloud VM — Lab Size 2 (AWS EC2 `t3.small`, Sydney `ap-southeast-2`)** | 2 vCPU, 2 GB RAM, 8 GB EBS | $19.27 / mo ($0.0264 / hr) | KES 2,505 / mo (KES 3.43 / hr) | AWS EC2 On-Demand Pricing (`aws.amazon.com/ec2/pricing/on-demand/`), read 13 Nov 2026 |
+## Measured
+Measured at 12:15 on 2026-11-13 on AWS EC2 `t3.micro` (from `SCS2b.3` lab):
+- `nproc`: 2 vCPUs
+- `free -m`: 362 MiB free of 914 MiB total RAM
+- `uptime`: load average 0.02, 0.03, 0.00 (CPU average ~1.5% across measured hours)
+- `df -h`: 6.1 GiB free of 7.6 GiB root disk
+- `uname -m`: x86_64 (Intel/AMD architecture; moving to `t4g` arm64 would require ARM-compiled packages/binaries)
 
-## Right-Size Line
-- **Recommended choice:** Option 1 (No-server static hosting at $0 / KES 0) or Option 2 (Shared hosting stall at ~$2.30 / KES 300/mo).
-- **Why not bigger (`t3.small` at $19.27 / KES 2,505/mo):** Mama J Kiosk has no backend database or heavy compute; paying for extra RAM and vCPUs wastes money every month and adds server maintenance.
-- **Why not smaller than `t3.micro` if a server were required:** Anything smaller than 1 vCPU / 1 GB RAM cannot run a full Linux OS and web stack reliably without running out of memory.
+## What to rent for what
+| Option | What it is for | Why / Owner impact |
+| :--- | :--- | :--- |
+| **No server (S3)** | Static HTML/CSS/JS pages only, no backend login | Cheapest option for a brochure/price list |
+| **t3.micro / t4g.micro** | Small dynamic site or light web app | Matches our measured lab baseline (2 vCPU, 1 GiB RAM) |
+| **Lightsail** | Simple VPS with one fixed monthly price | Easy for a small business owner to read one flat bill |
+| **m-class / GPU (`m5.large` / `g4dn.xlarge`)** | Never for a small client — heavy compute or ML | Costs ~9x–39x more than `t3.micro` (over 11,388–48,000 KES/mo) for idle hardware |
+| **scs-server VM** | Learning and local staging on the laptop | Free locally before deploying to live cloud |
 
-## Currency & Rate Card Source
-- Exchange rate used: **1 USD = 130 KES** (checked 13 Nov 2026).
-- All cloud and hosting rates verified directly on the provider pricing pages on **13 Nov 2026**.
+## My choice
+Lightsail 1 GB plan (or `t3.micro` if staying on EC2; `No server (S3)` if purely static pages).
 
-## Lab Two Sizes Check
-- **Lab Size 1 (`t3.micro`):** 2 vCPU, 1 GB RAM — $0.0132/hr ($9.64/mo | KES 1,253/mo).
-- **Lab Size 2 (`t3.small`):** 2 vCPU, 2 GB RAM — $0.0264/hr ($19.27/mo | KES 2,505/mo).
+## Why not bigger, why not smaller
+- **Why not bigger:** `free -m` at 12:15 showed 362 MiB free out of 914 MiB and `uptime` load was 0.02, so a `t3.small` (2 GiB RAM) would sit mostly idle while doubling the monthly cost.
+- **Why not smaller:** A `t3.nano` has only 512 MiB RAM, which is too tight to comfortably run Ubuntu, Nginx, and TLS/updates without memory pressure during traffic spikes.
 
-## Owner & Maintenance Note
-- **Who minds it:** No server OS to patch on static/shared hosting; client only updates product prices and photos.
+## Prices
+- AWS S3 static hosting (first 5 GB storage + light traffic, `ap-southeast-2`): USD 0.50 a month (`aws.amazon.com/s3/pricing/`, read 2026-11-13)
+- AWS EC2 `t3.micro` on-demand (`ap-southeast-2`): USD 0.0132 an hour / USD 9.64 a month (`aws.amazon.com/ec2/pricing/on-demand/`, read 2026-11-13)
+- AWS EC2 `t3.small` on-demand (`ap-southeast-2`): USD 0.0264 an hour / USD 19.27 a month (`aws.amazon.com/ec2/pricing/on-demand/`, read 2026-11-13)
+- AWS EC2 `m5.large` on-demand (`ap-southeast-2`): USD 0.1200 an hour / USD 87.60 a month — ~9.1x `t3.micro`, or ~11,388 KES/mo vs 1,253 KES/mo (`aws.amazon.com/ec2/pricing/on-demand/`, read 2026-11-13)
+- AWS Lightsail 1 GB Linux plan (`ap-southeast-2`): USD 5.00 a month (`lightsail.aws.amazon.com/ls/pricing/`, read 2026-11-13)
+- Rate: 1 USD = 130 KES, from Central Bank of Kenya indicative rate page, read 2026-11-13
 
-## AI Receipt
-- AI receipt: Gemini, 2026-11-13, helped structure the 7 headings and 5-row layout; every price, spec, and exchange rate was verified against the live provider pricing pages on 13 Nov 2026.
+## Lightsail or EC2 for this client
+Lightsail for this client, because the owner gets one predictable fixed monthly bill in USD/KES with disk and data transfer bundled rather than metered hourly EC2 charges.
