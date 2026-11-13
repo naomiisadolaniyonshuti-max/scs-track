@@ -19,7 +19,7 @@ Measured at 12:15 on 2026-11-13 on AWS EC2 `t3.micro` (from `SCS2b.3` lab):
 | **No server (S3)** | Static HTML/CSS/JS pages only, no backend login | Cheapest option for a brochure/price list |
 | **t3.micro / t4g.micro** | Small dynamic site or light web app | Matches our measured lab baseline (2 vCPU, 1 GiB RAM) |
 | **Lightsail** | Simple VPS with one fixed monthly price | Easy for a small business owner to read one flat bill |
-| **m-class / GPU (`m5.large` / `g4dn.xlarge`)** | Never for a small client — heavy compute or ML | Costs ~9x–39x more than `t3.micro` (over 11,388–48,000 KES/mo) for idle hardware |
+| **m-class / GPU (`m5.large` / `g4dn.xlarge`)** | Never for a small client — heavy compute or ML | Costs ~9x–39x more than `t3.micro` (over 11,388–48,000 KES/mo) for idle hardware (aws.amazon.com/ec2/pricing/on-demand/, read 2026-11-13) |
 | **scs-server VM** | Learning and local staging on the laptop | Free locally before deploying to live cloud |
 
 ## My choice
