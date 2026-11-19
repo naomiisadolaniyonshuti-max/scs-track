@@ -1,22 +1,22 @@
 /** @OnlyCurrentDoc */
 // AI-assisted, directed by naomiisadola
-// Reorder reminder: reads LIST and RECORD, writes low-stock items to Reorder, and emails Settings B1.
+// Reorder reminder: reads Lists and Records, writes low-stock items to Reorder, and emails Settings B1.
 function remindReorder() { // main function run by the daily trigger or manually from the editor
   var book = SpreadsheetApp.getActiveSpreadsheet(); // get the active copy of the spreadsheet
-  var listsSheet = book.getSheetByName('LIST'); // get the LIST tab containing item reorder levels
-  var recordsSheet = book.getSheetByName('RECORD'); // get the RECORD tab containing stock movements
+  var listsSheet = book.getSheetByName('Lists'); // get the Lists tab containing item reorder levels
+  var recordsSheet = book.getSheetByName('Records'); // get the Records tab containing stock movements
   var settingsSheet = book.getSheetByName('Settings'); // get the Settings tab containing the owner email
 
-  var items = listsSheet.getDataRange().getValues(); // read all rows from LIST (row 0 is headings)
-  var records = recordsSheet.getDataRange().getValues(); // read all rows from RECORD (row 0 is headings)
+  var items = listsSheet.getDataRange().getValues(); // read all rows from Lists (row 0 is headings)
+  var records = recordsSheet.getDataRange().getValues(); // read all rows from Records (row 0 is headings)
   var ownerEmail = String(settingsSheet.getRange('B1').getValue()).trim(); // read recipient email from Settings B1
 
   var stock = {}; // object to track current stock count per item name
   var problems = []; // array to collect rows with invalid text quantities
 
-  for (var r = 1; r < records.length; r++) { // loop through RECORD starting at row 1 to skip headings
+  for (var r = 1; r < records.length; r++) { // loop through Records starting at row 1 to skip headings
     var item = String(records[r][1]).trim(); // read item name from column B and trim extra spaces
-    var way = String(records[r][2]).trim().toLowerCase(); // read IN/OUT direction from column C in lowercase
+    var way = String(records[r][2]).trim().toLowerCase(); // read In/Out direction from column C in lowercase
     var rawQty = records[r][3]; // read quantity from column D
     if (item === '') continue; // skip blank rows safely
 
@@ -35,11 +35,11 @@ function remindReorder() { // main function run by the daily trigger or manually
   }
 
   var lowItems = []; // array to store items at or below their reorder level
-  for (var i = 1; i < items.length; i++) { // loop through LIST starting at row 1 to skip headings
+  for (var i = 1; i < items.length; i++) { // loop through Lists starting at row 1 to skip headings
     var listItem = String(items[i][0]).trim(); // read item name from column A and trim spaces
-    var unit = 'units'; // default unit label since LIST has ITEMS, PRICES, and REORDER AT
-    var reorderLevel = Number(items[i][2]); // read reorder level from column C (REORDER AT) as a number
-    if (listItem === '') continue; // skip blank rows in LIST
+    var unit = String(items[i][1]).trim(); // read unit from column B
+    var reorderLevel = Number(items[i][4]); // read reorder level from column E as a number
+    if (listItem === '') continue; // skip blank rows in Lists
 
     var currentStock = stock[listItem] || 0; // look up calculated stock, defaulting to 0 if none recorded
     if (currentStock <= reorderLevel) { // check if current stock is at or below the reorder level
