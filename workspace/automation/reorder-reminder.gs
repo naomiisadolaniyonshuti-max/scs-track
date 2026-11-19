@@ -1,7 +1,7 @@
 /** @OnlyCurrentDoc */
 // AI-assisted, directed by naomiisadola
 // Reorder reminder: reads LIST and RECORD, writes low-stock items to Reorder, and emails Settings B1.
-function checkStock() { // main function run by the daily trigger or manually from the editor
+function remindReorder() { // main function run by the daily trigger or manually from the editor
   var book = SpreadsheetApp.getActiveSpreadsheet(); // get the active copy of the spreadsheet
   var listsSheet = book.getSheetByName('LIST'); // get the LIST tab containing item reorder levels
   var recordsSheet = book.getSheetByName('RECORD'); // get the RECORD tab containing stock movements
