@@ -1,5 +1,6 @@
-naomiisadola@Isadola25:~/scs/projects/scs-track$ cat > ~/scs/evidence/scs3.5/reorder-reminder.gs
-and Records, writes low-stock items to Reorder, and emails Settings B1.
+/** @OnlyCurrentDoc */
+// AI-assisted, directed by naomiisadola
+// Reorder reminder: reads Lists and Records, writes low-stock items to Reorder, and emails Settings B1.
 function remindReorder() { // main function run by the daily trigger or manually from the editor
   var book = SpreadsheetApp.getActiveSpreadsheet(); // get the active copy of the spreadsheet
   var listsSheet = book.getSheetByName('Lists'); // get the Lists tab containing item reorder levels
