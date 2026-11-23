@@ -9,7 +9,7 @@
 | 4. Does it need customer logins, payments, or automated external APIs? | No, only internal stock tracking, valuation, and reorder alerts on the owner's phone. |
 | 5. Can the owner maintain it with a 1-page guide and protected formulas? | Yes, the owner only types in the 5 entry columns on `Records` and reads `Dashboard`. |
 
-Verdict: Sheets. Pattern: Stock and reorder ledger. Because: The retail kiosk tracks fewer than 150 stock movements a month from a single counter and needs zero-cost mobile visibility without database overhead.
+Verdict: Sheets. Pattern: inventory. Because: The retail kiosk tracks fewer than 150 stock movements a month from a single counter and needs zero-cost mobile visibility without database overhead.
 
 ## Validation
 | Column | Rule | The Garbage I Typed | Refused? |
@@ -28,11 +28,11 @@ Verdict: Sheets. Pattern: Stock and reorder ledger. Because: The retail kiosk tr
 | `Lists!A1:D50` | Builder and Owner | Warning when editing this range | Yes — owner can update unit prices and reorder levels |
 
 ## AI Receipts
-| Tool & Prompt Summary (Column Headings Only) | Formula Written Out | Verification Result |
-|---|---|---|
-| ChatGPT — asked for total `IN` and `OUT` units per item using `DATE, ITEM, DIRECTION, QUANTITY, PRICE, AMOUNT` | `=SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "IN")` | Matched hand check (`20` units for Sugar) |
-| ChatGPT — asked for net current stock balance across whole columns | `=SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "IN") - SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "OUT")` | Matched hand check (`14` units for Milk) |
-| Gemini — asked for reorder alert flag comparing current stock against `REORDER LEVEL` | `=IF(F5<=C5, "REORDER", "OK")` | Matched hand check (`REORDER` when balance <= threshold) |
+| The Ask (Column Headings Only) | The Formula | What I Changed | The Hand Check (Log Row) |
+|---|---|---|---|
+| ChatGPT — asked for total `IN` units per item across `DATE, ITEM, DIRECTION, QUANTITY, PRICE, AMOUNT` | `=SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "IN")` | Replaced single-row test cell `A2` with `A5` and used whole-column ranges `D:D` and `B:B` so future rows count | Row 1 (`Total Stock In`): Sugar `Records` `IN` rows = `20`, sheet = `20` (agreed) |
+| ChatGPT — asked for net stock balance (`IN` minus `OUT`) across `DATE, ITEM, DIRECTION, QUANTITY` | `=SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "IN") - SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "OUT")` | Renamed tab reference from `RECORD!` to `Records!` so cross-sheet lookup resolved cleanly | Row 3 (`Current Stock Balance`): Milk `IN 24 - OUT 10` = `14`, sheet = `14` (agreed) |
+| Gemini — asked for reorder flag comparing current stock against `ITEM, UNIT PRICE, REORDER LEVEL` | `=IF(F5<=C5, "REORDER", "OK")` | Standardized flag text to uppercase `"REORDER"` and `"OK"` to match `Dashboard` conditional formatting | Row 5 (`Reorder Status`): Sugar balance `6` <= reorder threshold -> `REORDER`, sheet = `REORDER` (agreed) |
 
 ## Break the books
 | Attack (Drill Card) | What I Said Would Happen | What Happened | Held or the Fix |
