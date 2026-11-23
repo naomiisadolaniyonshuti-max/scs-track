@@ -1,24 +1,46 @@
 # SCS3.4 Build Notes — Retail Kiosk Back Office
 
-## 1. Overkill Verdict
-Google Sheets is the right fit for this retail kiosk rather than a full database or custom app, because the owner tracks daily stock movements across fewer than 50 items and needs mobile access on a smartphone without recurring software fees.
+## Overkill Test
+| Question | Client Answer |
+|---|---|
+| 1. Does the business already have working software that handles this? | No, stock is currently tracked on paper notebooks and loose receipts. |
+| 2. How many people enter data at the same time? | One owner (and occasionally one shop attendant) entering daily stock movements, so row-level concurrency is not needed. |
+| 3. How many rows per month does the operation generate? | Roughly 80 to 150 stock entries per month—well under Google Sheets' limits. |
+| 4. Does it need customer logins, payments, or automated external APIs? | No, only internal stock tracking, valuation, and reorder alerts on the owner's phone. |
+| 5. Can the owner maintain it with a 1-page guide and protected formulas? | Yes, the owner only types in the 5 entry columns on `Records` and reads `Dashboard`. |
 
-## 2. Validation Rules and Garbage Tests
-Every entry column on `Records` has a data validation rule set to **Reject input**:
-- **Date (`Records!A:A`):** Valid date required; typing `"yesterday"` or `"abc"` was rejected with an error popup.
-- **Item (`Records!B:B`):** Dropdown from `Lists!A2:A`; typing an unlisted item `"Soda"` was rejected.
-- **Direction (`Records!C:C`):** Dropdown `"IN, OUT"`; typing `"SOLD"` was rejected.
-- **Quantity (`Records!D:D`):** Number greater than 0; typing `-5` or `"ten"` was rejected.
+Verdict: Sheets. Pattern: Stock and reorder ledger. Because: The retail kiosk tracks fewer than 150 stock movements a month from a single counter and needs zero-cost mobile visibility without database overhead.
 
-## 3. Protection and Owner's Minute
-The `Dashboard` sheet and all formula ranges on `Records` are protected so only the builder can edit formulas, while the owner is shared as an Editor on the entry columns (`Records!A2:E`) and `Lists`. During the owner's minute test signed in as a non-owner editor, typing over a Dashboard total was blocked, while appending a new stock row succeeded.
+## Validation
+| Column | Rule | The Garbage I Typed | Refused? |
+|---|---|---|---|
+| `Records!A2:A` (`DATE`) | Is valid date (Reject input) | `yesterday` and `32/13/2026` | Yes — rejected with invalid date error |
+| `Records!B2:B` (`ITEM`) | Dropdown from `Lists!A2:A` (Reject input) | `Unlisted Soda` | Yes — rejected because item is not in `Lists` |
+| `Records!C2:C` (`DIRECTION`) | Dropdown `IN, OUT` (Reject input) | `SOLD` | Yes — rejected because value must be `IN` or `OUT` |
+| `Records!D2:D` (`QUANTITY`) | Number greater than 0 (Reject input) | `-5` and `ten` | Yes — rejected because quantity must be > 0 |
+| `Records!E2:E` (`PRICE`) | Number greater than 0 (Reject input) | `0` and `free` | Yes — rejected because price must be > 0 |
 
-## 4. AI Receipts
-- **Tool:** ChatGPT / Gemini (column headings only shared: `DATE, ITEM, DIRECTION, QUANTITY, PRICE, AMOUNT` and `ITEM, UNIT PRICE, REORDER LEVEL`).
-- **Prompt 1:** Asked for a `SUMIFS` formula across whole columns on `Records` to total `"IN"` and `"OUT"` quantities per item on `Dashboard`.
-- **Prompt 2:** Asked for an `IF` formula comparing current stock balance against `Reorder Level` to return `"REORDER"` or `"OK"`.
-- **Verification:** Tested every formula against hand-calculated rows in `hand-check-log.md` before locking the sheet.
+## Protection
+| Range | Who Can Edit | Warning or Restriction | Entry Columns Still Open? |
+|---|---|---|---|
+| `Dashboard!A1:Z100` | Builder only | Restrict who can edit this range | Yes — `Records!A2:E` remains open for owner entry |
+| `Records!F2:F` (`AMOUNT` formula) | Builder only | Restrict who can edit this range | Yes — owner can still add new rows in `Records!A2:E` |
+| `Lists!A1:D50` | Builder and Owner | Warning when editing this range | Yes — owner can update unit prices and reorder levels |
 
-## 5. Break the Books
-- **Test 1 (Overwrite vs. Ledger Correction):** Tested changing an earlier quantity directly vs. adding a reversing correction row; confirmed the ledger rule requires appending a new adjustment row so version history preserves the audit trail.
-- **Test 2 (Blank / Future Date or Missing Price):** Tested leaving a price blank on `Lists`, which caused stock valuation to under-report until the missing unit price was filled and validated as a positive number.
+## AI Receipts
+| Tool & Prompt Summary (Column Headings Only) | Formula Written Out | Verification Result |
+|---|---|---|
+| ChatGPT — asked for total `IN` and `OUT` units per item using `DATE, ITEM, DIRECTION, QUANTITY, PRICE, AMOUNT` | `=SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "IN")` | Matched hand check (`20` units for Sugar) |
+| ChatGPT — asked for net current stock balance across whole columns | `=SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "IN") - SUMIFS(Records!D:D, Records!B:B, A5, Records!C:C, "OUT")` | Matched hand check (`14` units for Milk) |
+| Gemini — asked for reorder alert flag comparing current stock against `REORDER LEVEL` | `=IF(F5<=C5, "REORDER", "OK")` | Matched hand check (`REORDER` when balance <= threshold) |
+
+## Break the books
+| Attack (Drill Card) | What I Said Would Happen | What Happened | Held or the Fix |
+|---|---|---|---|
+| 1. Typing text (`"abc"`) into `QUANTITY` | Validation rule would block non-numeric text | Google Sheets rejected the input immediately | Held — Reject input rule blocked bad text |
+| 2. Entering an unlisted item (`"Soda"`) in `ITEM` | Dropdown rule from `Lists!A2:A` would block it | Initially accepted before rule was added; after adding dropdown with Reject input, it blocked `"Soda"` | Fixed — added `Lists!A2:A` dropdown rule on `Records!B2:B` |
+| 3. Typing a negative quantity (`-10`) in `QUANTITY` | Greater-than-0 rule would refuse negative numbers | Rejected with validation error | Held — prevented fake negative stock entries |
+| 4. Overwriting an old row instead of adding a correction row | Direct edit would hide the mistake from the ledger | Version history showed the overwrite; practiced appending a reversing `OUT`/`IN` row instead | Held — documented ledger rule in owner's card |
+| 5. Typing over a `Dashboard` total as a non-owner editor | Protected range would block edits on `Dashboard` | Sheets blocked the edit and displayed the protected range notice | Held — `Dashboard` protection prevented formula overwrite |
+| 6. Adding a new row at the bottom (row 22+) | Whole-column `SUMIFS` formulas would include it automatically | `Dashboard` totals updated immediately without changing formula ranges | Held — whole-column ranges (`D:D`, `B:B`) included new rows |
+| 7. Leaving `REORDER LEVEL` or `UNIT PRICE` blank on `Lists` | Blank reorder level could falsely trigger `"OK"` or zero valuation | Blank threshold evaluated as `0`, hiding a reorder alert until filled | Fixed — added >0 validation on `Lists` prices and reorder thresholds |
