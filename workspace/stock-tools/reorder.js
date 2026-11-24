@@ -32,7 +32,7 @@ function groupBySupplier(list) {
 // The counter staff type item names in lower case on the phone -- tidy them for the message.
 function tidyName(name) {
   if (name === name.toLowerCase()) {
-    return name.replace(/\b\w/g, (c) => c.toUpperCase());
+    return name.replace(/(^|\s)\w/g, (c) => c.toUpperCase());
   }
   return name;
 }
